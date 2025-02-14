@@ -16,9 +16,10 @@ export class GameEngine {
     this.score = 0;
     this.onGameOver = onGameOver;
     this.platforms = [];
-    this.player = new Player(canvas.width / 2, canvas.height - 100);
     this.animationFrame = 0;
-    
+
+    // Initialize after canvas dimensions are set
+    this.player = new Player(canvas.width / 2, canvas.height - 100);
     this.initializePlatforms();
     this.setupControls();
   }
@@ -27,11 +28,24 @@ export class GameEngine {
     const platformCount = Math.floor(this.canvas.height / 100);
     this.platforms = [];
 
-    for (let i = 0; i < platformCount; i++) {
-      this.platforms.push(new Platform(
-        Math.random() * (this.canvas.width - 60),
-        this.canvas.height - (i * 100) - 50
-      ));
+    // Add starting platform under the player
+    this.platforms.push(
+      new Platform(
+        this.canvas.width / 2 - 30,
+        this.canvas.height - 30,
+        60,
+        10
+      )
+    );
+
+    // Add rest of the platforms
+    for (let i = 1; i < platformCount; i++) {
+      this.platforms.push(
+        new Platform(
+          Math.random() * (this.canvas.width - 60),
+          this.canvas.height - (i * 100) - 50
+        )
+      );
     }
   }
 
@@ -55,13 +69,13 @@ export class GameEngine {
 
   private update() {
     applyPhysics(this.player);
-    
+
     // Move platforms down when player goes up
     if (this.player.y < this.canvas.height / 2) {
       const diff = this.canvas.height / 2 - this.player.y;
       this.player.y = this.canvas.height / 2;
       this.score += Math.floor(diff);
-      
+
       this.platforms.forEach(platform => {
         platform.y += diff;
         if (platform.y > this.canvas.height) {
@@ -98,13 +112,13 @@ export class GameEngine {
 
   private render() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    
+
     // Draw platforms
     this.ctx.fillStyle = "#4CAF50";
     this.platforms.forEach(platform => {
       this.ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
     });
-    
+
     // Draw player
     this.ctx.fillStyle = "#2196F3";
     this.ctx.fillRect(
@@ -123,6 +137,9 @@ export class GameEngine {
 
   public start() {
     if (!this.animationFrame) {
+      // Reset player position on start
+      this.player.y = this.canvas.height - 100;
+      this.player.velocityY = 0;
       this.gameLoop();
     }
   }

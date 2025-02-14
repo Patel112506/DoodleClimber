@@ -5,7 +5,7 @@ import { useState } from "react";
 
 export default function Game() {
   const [score, setScore] = useState(0);
-  const [gameOver, setGameOver] = useState(false);
+  const [gameOver, setGameOver] = useState(false); // Initialize as false
 
   const handleGameOver = (finalScore: number) => {
     setScore(finalScore);

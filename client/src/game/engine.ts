@@ -38,14 +38,13 @@ export class GameEngine {
     this.powerUps = [];
 
     // Add starting platform under the player
-    this.platforms.push(
-      new Platform(
-        this.canvas.width / 2 - 40,
-        this.canvas.height - 30,
-        80,
-        15
-      )
+    const startPlatform = new Platform(
+      this.canvas.width / 2 - 40,
+      this.canvas.height - 30,
+      80,
+      15
     );
+    this.platforms.push(startPlatform);
 
     // Add rest of the platforms with occasional monsters and power-ups
     for (let i = 1; i < this.platformCount; i++) {
@@ -56,40 +55,42 @@ export class GameEngine {
 
       // 20% chance to spawn a monster on a platform
       if (Math.random() < 0.2) {
-        this.monsters.push(new Monster(platformX, platformY - 30, platform.width, platformX));
+        this.monsters.push(
+          new Monster(platformX, platformY - 30, platform.width, platformX)
+        );
       }
 
       // 10% chance to spawn a power-up
       if (Math.random() < 0.1) {
-        const powerUpType = Math.random() < 0.5 ? PowerUpType.SHIELD : PowerUpType.JETPACK;
-        this.powerUps.push(new PowerUp(
-          platformX + platform.width / 2,
-          platformY - 30,
-          powerUpType
-        ));
+        const powerUpType =
+          Math.random() < 0.5 ? PowerUpType.SHIELD : PowerUpType.JETPACK;
+        this.powerUps.push(
+          new PowerUp(platformX + platform.width / 2, platformY - 30, powerUpType)
+        );
       }
     }
+
+    console.log(`Initialized ${this.platforms.length} platforms`);
   }
 
-  public handleInput(action: 'left' | 'right' | 'stop') {
+  public handleInput(action: "left" | "right" | "stop") {
     switch (action) {
-      case 'left':
+      case "left":
         this.player.moveLeft();
         break;
-      case 'right':
+      case "right":
         this.player.moveRight();
         break;
-      case 'stop':
+      case "stop":
         this.player.stop();
         break;
     }
   }
 
   public handleResize() {
+    this.platformCount = Math.floor(this.canvas.height / 80);
     this.player.x = Math.min(this.player.x, this.canvas.width - this.player.width);
-    this.platforms.forEach(platform => {
-      platform.x = Math.min(platform.x, this.canvas.width - platform.width);
-    });
+    this.initializePlatforms(); // Reinitialize platforms on resize
   }
 
   private checkCollision(rect1: any, rect2: any): boolean {
@@ -104,7 +105,7 @@ export class GameEngine {
   private update() {
     // Update power-up states
     const currentTime = Date.now();
-    this.activePowerUps = this.activePowerUps.filter(powerUp => {
+    this.activePowerUps = this.activePowerUps.filter((powerUp) => {
       if (powerUp.endTime <= currentTime) {
         if (powerUp.type === PowerUpType.SHIELD) this.player.hasShield = false;
         if (powerUp.type === PowerUpType.JETPACK) this.player.hasJetpack = false;
@@ -116,7 +117,7 @@ export class GameEngine {
     applyPhysics(this.player);
 
     // Move monsters
-    this.monsters.forEach(monster => monster.move());
+    this.monsters.forEach((monster) => monster.move());
 
     // Move platforms down when player goes up
     if (this.player.y < this.canvas.height / 2) {
@@ -124,23 +125,24 @@ export class GameEngine {
       this.player.y = this.canvas.height / 2;
       this.score += Math.floor(diff * 0.1);
 
-      this.platforms.forEach(platform => {
+      this.platforms.forEach((platform) => {
         platform.y += diff;
       });
 
-      this.monsters.forEach(monster => {
+      this.monsters.forEach((monster) => {
         monster.y += diff;
       });
 
-      this.powerUps.forEach(powerUp => {
+      this.powerUps.forEach((powerUp) => {
         powerUp.y += diff;
       });
 
       // Remove and replace off-screen objects
-      this.platforms = this.platforms.filter(p => p.y <= this.canvas.height);
-      this.monsters = this.monsters.filter(m => m.y <= this.canvas.height);
-      this.powerUps = this.powerUps.filter(p => p.y <= this.canvas.height);
+      this.platforms = this.platforms.filter((p) => p.y <= this.canvas.height);
+      this.monsters = this.monsters.filter((m) => m.y <= this.canvas.height);
+      this.powerUps = this.powerUps.filter((p) => p.y <= this.canvas.height);
 
+      // Add new platforms at the top
       while (this.platforms.length < this.platformCount) {
         const platformX = Math.random() * (this.canvas.width - 80);
         const platform = new Platform(platformX, 0);
@@ -151,20 +153,18 @@ export class GameEngine {
         }
 
         if (Math.random() < 0.1) {
-          const powerUpType = Math.random() < 0.5 ? PowerUpType.SHIELD : PowerUpType.JETPACK;
-          this.powerUps.push(new PowerUp(
-            platformX + platform.width / 2,
-            -30,
-            powerUpType
-          ));
+          const powerUpType =
+            Math.random() < 0.5 ? PowerUpType.SHIELD : PowerUpType.JETPACK;
+          this.powerUps.push(
+            new PowerUp(platformX + platform.width / 2, -30, powerUpType)
+          );
         }
       }
     }
 
     // Check collisions with platforms
-    this.platforms.forEach(platform => {
-      if (this.player.velocityY > 0 &&
-          this.checkCollision(this.player, platform)) {
+    this.platforms.forEach((platform) => {
+      if (this.player.velocityY > 0 && this.checkCollision(this.player, platform)) {
         this.player.jump();
       }
     });
@@ -179,7 +179,7 @@ export class GameEngine {
     }
 
     // Check collisions with power-ups
-    this.powerUps = this.powerUps.filter(powerUp => {
+    this.powerUps = this.powerUps.filter((powerUp) => {
       if (this.checkCollision(this.player, powerUp)) {
         const endTime = Date.now() + powerUp.duration;
         this.activePowerUps.push({ type: powerUp.type, endTime });
@@ -207,22 +207,23 @@ export class GameEngine {
   }
 
   private render() {
+    // Clear the canvas
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     // Draw platforms
     this.ctx.fillStyle = "#4CAF50";
-    this.platforms.forEach(platform => {
+    this.platforms.forEach((platform) => {
       this.ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
     });
 
     // Draw monsters
     this.ctx.fillStyle = "#FF4444";
-    this.monsters.forEach(monster => {
+    this.monsters.forEach((monster) => {
       this.ctx.fillRect(monster.x, monster.y, monster.width, monster.height);
     });
 
     // Draw power-ups
-    this.powerUps.forEach(powerUp => {
+    this.powerUps.forEach((powerUp) => {
       this.ctx.fillStyle = powerUp.type === PowerUpType.SHIELD ? "#FFD700" : "#4169E1";
       this.ctx.beginPath();
       this.ctx.arc(
@@ -264,6 +265,8 @@ export class GameEngine {
 
   public start() {
     if (!this.animationFrame) {
+      console.log("Starting game...");
+      this.score = 0;
       this.player = new Player(this.canvas.width / 2, this.canvas.height - 100);
       this.initializePlatforms();
       this.gameLoop();
@@ -278,6 +281,7 @@ export class GameEngine {
   }
 
   public reset() {
+    console.log("Resetting game...");
     this.score = 0;
     this.player = new Player(this.canvas.width / 2, this.canvas.height - 100);
     this.initializePlatforms();

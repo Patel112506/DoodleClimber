@@ -53,6 +53,7 @@ export function GameCanvas({ onGameOver, gameOver }: GameCanvasProps) {
       }
     };
 
+    // Initialize the canvas and start the game
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
     canvas.addEventListener("touchstart", handleTouchStart);

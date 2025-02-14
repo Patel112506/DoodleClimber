@@ -1,5 +1,5 @@
 import { Player, Platform, PowerUp, Monster } from "./entities";
-import { PowerUpType, PowerUpState, PlatformType } from "./types";
+import { PowerUpType, PowerUpState } from "./types";
 import { applyPhysics } from "./physics";
 
 export class GameEngine {
@@ -26,18 +26,8 @@ export class GameEngine {
     this.activePowerUps = [];
     this.animationFrame = 0;
     this.platformCount = Math.floor(this.canvas.height / 80);
-
-    // Initialize after canvas dimensions are set
     this.player = new Player(canvas.width / 2, canvas.height - 100);
     this.initializePlatforms();
-  }
-
-  private getRandomPlatformType(): PlatformType {
-    const rand = Math.random();
-    if (rand < 0.6) return PlatformType.NORMAL;
-    if (rand < 0.75) return PlatformType.MOVING;
-    if (rand < 0.9) return PlatformType.BOUNCY;
-    return PlatformType.BREAKABLE;
   }
 
   private initializePlatforms() {
@@ -45,26 +35,22 @@ export class GameEngine {
     this.monsters = [];
     this.powerUps = [];
 
-    // Add starting platform under the player (always normal)
+    // Add starting platform under the player
     const startPlatform = new Platform(
       this.canvas.width / 2 - 40,
-      this.canvas.height - 30,
-      80,
-      15,
-      PlatformType.NORMAL
+      this.canvas.height - 30
     );
     this.platforms.push(startPlatform);
 
-    // Add rest of the platforms with occasional monsters and power-ups
+    // Add rest of the platforms
     for (let i = 1; i < this.platformCount; i++) {
       const platformX = Math.random() * (this.canvas.width - 80);
       const platformY = this.canvas.height - (i * 80) - Math.random() * 20;
-      const platformType = this.getRandomPlatformType();
-      const platform = new Platform(platformX, platformY, 80, 15, platformType);
+      const platform = new Platform(platformX, platformY);
       this.platforms.push(platform);
 
-      // 20% chance to spawn a monster on normal platforms
-      if (Math.random() < 0.2 && platformType === PlatformType.NORMAL) {
+      // 20% chance to spawn a monster
+      if (Math.random() < 0.2) {
         this.monsters.push(
           new Monster(platformX, platformY - 30, platform.width, platformX)
         );
@@ -79,8 +65,6 @@ export class GameEngine {
         );
       }
     }
-
-    console.log(`Initialized ${this.platforms.length} platforms`);
   }
 
   public handleInput(action: "left" | "right" | "stop") {
@@ -129,9 +113,6 @@ export class GameEngine {
     // Move monsters
     this.monsters.forEach((monster) => monster.move());
 
-    // Update platforms
-    this.platforms.forEach((platform) => platform.update());
-
     // Move platforms down when player goes up
     if (this.player.y < this.canvas.height / 2) {
       const diff = this.canvas.height / 2 - this.player.y;
@@ -150,19 +131,18 @@ export class GameEngine {
         powerUp.y += diff;
       });
 
-      // Remove and replace off-screen objects
-      this.platforms = this.platforms.filter((p) => p.y <= this.canvas.height && p.isActive());
+      // Remove off-screen objects
+      this.platforms = this.platforms.filter((p) => p.y <= this.canvas.height);
       this.monsters = this.monsters.filter((m) => m.y <= this.canvas.height);
       this.powerUps = this.powerUps.filter((p) => p.y <= this.canvas.height);
 
       // Add new platforms at the top
       while (this.platforms.length < this.platformCount) {
         const platformX = Math.random() * (this.canvas.width - 80);
-        const platformType = this.getRandomPlatformType();
-        const platform = new Platform(platformX, 0, 80, 15, platformType);
+        const platform = new Platform(platformX, 0);
         this.platforms.push(platform);
 
-        if (Math.random() < 0.2 && platformType === PlatformType.NORMAL) {
+        if (Math.random() < 0.2) {
           this.monsters.push(new Monster(platformX, -30, platform.width, platformX));
         }
 
@@ -177,9 +157,15 @@ export class GameEngine {
     }
 
     // Check collisions with platforms
+    let hasCollided = false;
     this.platforms.forEach((platform) => {
-      if (this.player.velocityY > 0 && this.checkCollision(this.player, platform)) {
-        platform.onCollision(this.player);
+      if (
+        this.player.velocityY > 0 &&
+        this.checkCollision(this.player, platform) &&
+        this.player.y < platform.y + platform.height / 2
+      ) {
+        this.player.jump();
+        hasCollided = true;
       }
     });
 
@@ -213,25 +199,11 @@ export class GameEngine {
       this.player.x = -this.player.width;
     }
 
-    // Check for game over
-    if (this.player.y > this.canvas.height) {
+    // Check for game over with threshold
+    const fallThreshold = this.canvas.height + 100; // Give some extra space below
+    if (this.player.y > fallThreshold) {
       this.stop();
       this.onGameOver(this.score);
-    }
-  }
-
-  private getPlatformColor(platform: Platform): string {
-    switch (platform.type) {
-      case PlatformType.NORMAL:
-        return "#4CAF50";
-      case PlatformType.MOVING:
-        return "#2196F3";
-      case PlatformType.BOUNCY:
-        return "#FFD700";
-      case PlatformType.BREAKABLE:
-        return platform.broken ? "#FF634740" : "#FF6347";
-      default:
-        return "#4CAF50";
     }
   }
 
@@ -240,8 +212,8 @@ export class GameEngine {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     // Draw platforms
+    this.ctx.fillStyle = "#4CAF50";
     this.platforms.forEach((platform) => {
-      this.ctx.fillStyle = this.getPlatformColor(platform);
       this.ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
     });
 
@@ -294,7 +266,6 @@ export class GameEngine {
 
   public start() {
     if (!this.animationFrame) {
-      console.log("Starting game...");
       this.score = 0;
       this.player = new Player(this.canvas.width / 2, this.canvas.height - 100);
       this.initializePlatforms();
@@ -310,7 +281,6 @@ export class GameEngine {
   }
 
   public reset() {
-    console.log("Resetting game...");
     this.score = 0;
     this.player = new Player(this.canvas.width / 2, this.canvas.height - 100);
     this.initializePlatforms();

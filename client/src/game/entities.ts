@@ -1,4 +1,4 @@
-import { PowerUpType, PlatformType } from "./types";
+import { PowerUpType } from "./types";
 
 export class Player {
   public x: number;
@@ -8,7 +8,7 @@ export class Player {
   public velocityX: number = 0;
   public velocityY: number = 0;
   public speed: number = 8;
-  public jumpForce: number = -20;
+  public jumpForce: number = -15;
   public hasShield: boolean = false;
   public hasJetpack: boolean = false;
 
@@ -29,62 +29,22 @@ export class Player {
     this.velocityX = 0;
   }
 
-  jump(multiplier: number = 1) {
+  jump() {
     if (this.hasJetpack) {
-      this.velocityY = this.jumpForce * 1.5 * multiplier;
+      this.velocityY = this.jumpForce * 1.5;
     } else {
-      this.velocityY = this.jumpForce * multiplier;
+      this.velocityY = this.jumpForce;
     }
   }
 }
 
 export class Platform {
-  public broken: boolean = false;
-  public moveDirection: number = 1;
-  public moveSpeed: number = 2;
-  public bounceStrength: number = 1.5;
-
   constructor(
     public x: number,
     public y: number,
-    public type: PlatformType = PlatformType.NORMAL,
     public width: number = 80,
     public height: number = 15
   ) {}
-
-  update() {
-    if (this.type === PlatformType.MOVING) {
-      this.x += this.moveSpeed * this.moveDirection;
-      // Change direction when reaching screen edges
-      if (this.x <= 0 || this.x + this.width >= window.innerWidth) {
-        this.moveDirection *= -1;
-      }
-    }
-  }
-
-  onCollision(player: Player) {
-    switch (this.type) {
-      case PlatformType.NORMAL:
-        player.jump();
-        break;
-      case PlatformType.BREAKABLE:
-        if (!this.broken) {
-          player.jump();
-          this.broken = true;
-        }
-        break;
-      case PlatformType.BOUNCY:
-        player.jump(this.bounceStrength);
-        break;
-      case PlatformType.MOVING:
-        player.jump();
-        break;
-    }
-  }
-
-  isActive(): boolean {
-    return this.type !== PlatformType.BREAKABLE || !this.broken;
-  }
 }
 
 export class PowerUp {

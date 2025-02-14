@@ -21,20 +21,19 @@ export class GameEngine {
     // Initialize after canvas dimensions are set
     this.player = new Player(canvas.width / 2, canvas.height - 100);
     this.initializePlatforms();
-    this.setupControls();
   }
 
   private initializePlatforms() {
-    const platformCount = Math.floor(this.canvas.height / 100);
+    const platformCount = Math.floor(this.canvas.height / 80); // Adjusted spacing
     this.platforms = [];
 
     // Add starting platform under the player
     this.platforms.push(
       new Platform(
-        this.canvas.width / 2 - 30,
+        this.canvas.width / 2 - 40,
         this.canvas.height - 30,
-        60,
-        10
+        80,
+        15
       )
     );
 
@@ -42,22 +41,25 @@ export class GameEngine {
     for (let i = 1; i < platformCount; i++) {
       this.platforms.push(
         new Platform(
-          Math.random() * (this.canvas.width - 60),
-          this.canvas.height - (i * 100) - 50
+          Math.random() * (this.canvas.width - 80),
+          this.canvas.height - (i * 80) - Math.random() * 20
         )
       );
     }
   }
 
-  private setupControls() {
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowLeft") this.player.moveLeft();
-      if (e.key === "ArrowRight") this.player.moveRight();
-    });
-
-    window.addEventListener("keyup", (e) => {
-      if (e.key === "ArrowLeft" || e.key === "ArrowRight") this.player.stop();
-    });
+  public handleInput(action: 'left' | 'right' | 'stop') {
+    switch (action) {
+      case 'left':
+        this.player.moveLeft();
+        break;
+      case 'right':
+        this.player.moveRight();
+        break;
+      case 'stop':
+        this.player.stop();
+        break;
+    }
   }
 
   public handleResize() {
@@ -74,7 +76,7 @@ export class GameEngine {
     if (this.player.y < this.canvas.height / 2) {
       const diff = this.canvas.height / 2 - this.player.y;
       this.player.y = this.canvas.height / 2;
-      this.score += Math.floor(diff);
+      this.score += Math.floor(diff * 0.1); // Adjusted scoring rate
 
       this.platforms.forEach(platform => {
         platform.y += diff;

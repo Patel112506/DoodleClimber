@@ -5,8 +5,8 @@ export class Player {
   public height: number = 30;
   public velocityX: number = 0;
   public velocityY: number = 0;
-  public speed: number = 5;
-  public jumpForce: number = -15;
+  public speed: number = 8; // Increased from 5
+  public jumpForce: number = -20; // Increased from -15
 
   constructor(x: number, y: number) {
     this.x = x;
@@ -34,7 +34,7 @@ export class Platform {
   constructor(
     public x: number,
     public y: number,
-    public width: number = 60,
-    public height: number = 10
+    public width: number = 80, // Increased from 60
+    public height: number = 15  // Increased from 10
   ) {}
 }

@@ -8,7 +8,7 @@ export class Player {
   public velocityX: number = 0;
   public velocityY: number = 0;
   public speed: number = 8;
-  public jumpForce: number = -15;
+  public jumpForce: number = -18; // Increased from -15 for higher jumps
   public hasShield: boolean = false;
   public hasJetpack: boolean = false;
 

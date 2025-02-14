@@ -1,6 +1,6 @@
 import { Player } from "./entities";
 
-const GRAVITY = 0.4; // Reduced from 0.5 for more control
+const GRAVITY = 0.25; // Reduced from 0.4 for floatier jumps
 const TERMINAL_VELOCITY = 12;
 
 export function applyPhysics(player: Player) {

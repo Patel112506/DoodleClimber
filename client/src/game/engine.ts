@@ -264,8 +264,8 @@ export class GameEngine {
 
   public start() {
     if (!this.animationFrame) {
-      this.player.y = this.canvas.height - 100;
-      this.player.velocityY = 0;
+      this.player = new Player(this.canvas.width / 2, this.canvas.height - 100);
+      this.initializePlatforms();
       this.gameLoop();
     }
   }

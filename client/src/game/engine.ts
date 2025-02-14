@@ -1,5 +1,5 @@
 import { Player, Platform, PowerUp, Monster } from "./entities";
-import { PowerUpType, PowerUpState } from "./types";
+import { PowerUpType, PowerUpState, PlatformType } from "./types";
 import { applyPhysics } from "./physics";
 
 export class GameEngine {
@@ -38,7 +38,10 @@ export class GameEngine {
     // Add starting platform under the player
     const startPlatform = new Platform(
       this.canvas.width / 2 - 40,
-      this.canvas.height - 30
+      this.canvas.height - 30,
+      80,
+      15,
+      PlatformType.NORMAL
     );
     this.platforms.push(startPlatform);
 
@@ -46,11 +49,14 @@ export class GameEngine {
     for (let i = 1; i < this.platformCount; i++) {
       const platformX = Math.random() * (this.canvas.width - 80);
       const platformY = this.canvas.height - (i * 80) - Math.random() * 20;
-      const platform = new Platform(platformX, platformY);
+
+      // Randomly select platform type
+      const platformType = this.getRandomPlatformType();
+      const platform = new Platform(platformX, platformY, 80, 15, platformType);
       this.platforms.push(platform);
 
-      // 20% chance to spawn a monster
-      if (Math.random() < 0.2) {
+      // 20% chance to spawn a monster on normal platforms
+      if (Math.random() < 0.2 && platformType === PlatformType.NORMAL) {
         this.monsters.push(
           new Monster(platformX, platformY - 30, platform.width, platformX)
         );
@@ -65,6 +71,14 @@ export class GameEngine {
         );
       }
     }
+  }
+
+  private getRandomPlatformType(): PlatformType {
+    const rand = Math.random();
+    if (rand < 0.6) return PlatformType.NORMAL;
+    if (rand < 0.75) return PlatformType.BREAKABLE;
+    if (rand < 0.9) return PlatformType.MOVING;
+    return PlatformType.BOUNCY;
   }
 
   public handleInput(action: "left" | "right" | "stop") {
@@ -110,6 +124,9 @@ export class GameEngine {
 
     applyPhysics(this.player);
 
+    // Update platform positions and states
+    this.platforms.forEach(platform => platform.update());
+
     // Move monsters
     this.monsters.forEach((monster) => monster.move());
 
@@ -139,10 +156,11 @@ export class GameEngine {
       // Add new platforms at the top
       while (this.platforms.length < this.platformCount) {
         const platformX = Math.random() * (this.canvas.width - 80);
-        const platform = new Platform(platformX, 0);
+        const platformType = this.getRandomPlatformType();
+        const platform = new Platform(platformX, 0, 80, 15, platformType);
         this.platforms.push(platform);
 
-        if (Math.random() < 0.2) {
+        if (Math.random() < 0.2 && platformType === PlatformType.NORMAL) {
           this.monsters.push(new Monster(platformX, -30, platform.width, platformX));
         }
 
@@ -162,9 +180,22 @@ export class GameEngine {
       if (
         this.player.velocityY > 0 &&
         this.checkCollision(this.player, platform) &&
-        this.player.y < platform.y + platform.height / 2
+        this.player.y < platform.y + platform.height / 2 &&
+        !platform.state.broken
       ) {
-        this.player.jump();
+        // Handle different platform types
+        switch (platform.type) {
+          case PlatformType.BREAKABLE:
+            platform.state.broken = true;
+            this.player.jump();
+            break;
+          case PlatformType.BOUNCY:
+            this.player.jump(platform.state.bounceStrength);
+            break;
+          default:
+            this.player.jump();
+            break;
+        }
         hasCollided = true;
       }
     });
@@ -211,9 +242,24 @@ export class GameEngine {
     // Clear the canvas
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Draw platforms
-    this.ctx.fillStyle = "#4CAF50";
+    // Draw platforms with different colors based on type
     this.platforms.forEach((platform) => {
+      if (platform.state.broken) return; // Don't draw broken platforms
+
+      switch (platform.type) {
+        case PlatformType.NORMAL:
+          this.ctx.fillStyle = "#4CAF50";
+          break;
+        case PlatformType.BREAKABLE:
+          this.ctx.fillStyle = "#FF9800";
+          break;
+        case PlatformType.MOVING:
+          this.ctx.fillStyle = "#2196F3";
+          break;
+        case PlatformType.BOUNCY:
+          this.ctx.fillStyle = "#E91E63";
+          break;
+      }
       this.ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
     });
 

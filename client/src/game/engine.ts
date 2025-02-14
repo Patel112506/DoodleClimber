@@ -12,6 +12,7 @@ export class GameEngine {
   private activePowerUps: PowerUpState[];
   private score: number;
   private animationFrame: number;
+  private platformCount: number;
   private onGameOver: (score: number) => void;
 
   constructor(canvas: HTMLCanvasElement, onGameOver: (score: number) => void) {
@@ -24,6 +25,7 @@ export class GameEngine {
     this.powerUps = [];
     this.activePowerUps = [];
     this.animationFrame = 0;
+    this.platformCount = Math.floor(this.canvas.height / 80);
 
     // Initialize after canvas dimensions are set
     this.player = new Player(canvas.width / 2, canvas.height - 100);
@@ -31,7 +33,6 @@ export class GameEngine {
   }
 
   private initializePlatforms() {
-    const platformCount = Math.floor(this.canvas.height / 80);
     this.platforms = [];
     this.monsters = [];
     this.powerUps = [];
@@ -47,7 +48,7 @@ export class GameEngine {
     );
 
     // Add rest of the platforms with occasional monsters and power-ups
-    for (let i = 1; i < platformCount; i++) {
+    for (let i = 1; i < this.platformCount; i++) {
       const platformX = Math.random() * (this.canvas.width - 80);
       const platformY = this.canvas.height - (i * 80) - Math.random() * 20;
       const platform = new Platform(platformX, platformY);
@@ -140,7 +141,7 @@ export class GameEngine {
       this.monsters = this.monsters.filter(m => m.y <= this.canvas.height);
       this.powerUps = this.powerUps.filter(p => p.y <= this.canvas.height);
 
-      while (this.platforms.length < platformCount) {
+      while (this.platforms.length < this.platformCount) {
         const platformX = Math.random() * (this.canvas.width - 80);
         const platform = new Platform(platformX, 0);
         this.platforms.push(platform);
